@@ -5,7 +5,7 @@ Created on Tue Jun 21 21:34:30 2022
 @author: Adrien SCHWEGLER
 """
 import csv, sqlite3,os
-from openpyxl import load_workbook, Workbook
+#from openpyxl import load_workbook, Workbook
 from copy import deepcopy
 
 
@@ -48,14 +48,14 @@ def extractTrip(dictRoutes, direction):
     dictTrip = {}
     for route, tripe in dictRoutes.items():
         cursor = connection.cursor()
-        cursor.execute('''SELECT trips.trip_id
+        cursor.execute('''SELECT trips.trip_id, service_id
                        FROM trips
                        JOIN stop_times
                        ON stop_times.trip_id = trips.trip_id
                        WHERE trips.route_id = "{}" AND trips.direction_id = "{}"
                        ORDER BY stop_times.departure_time
                         '''.format(route, direction))
-        dictTrip[route] = {key[0] : {} for key in cursor}
+        dictTrip[route] = {key : {} for key in cursor}  #je prend à la fois trip_id et service id.
     return dictTrip
 
 
@@ -63,7 +63,8 @@ def suppdoubleAndExtractStops(dictTrip): #from trips_id
     dictTripStops = deepcopy(dictTrip)
     for route_id, value in dictTrip.items():
         compare = []                #list of all trips number already pass(not necessarly same day)
-        for trip_id, noth in value.items():
+        for tripAndService_id, noth in value.items():
+            trip_id = tripAndService_id[0]
             index_end_number = 0   
             for caract in trip_id:      #looking for the len of the trips's number at the begining of the trip_id
                 if 48<=ord(caract)<=57: #if it is a number
@@ -71,7 +72,7 @@ def suppdoubleAndExtractStops(dictTrip): #from trips_id
                 else:
                     break#if not : the number has end so break the loop            
             if trip_id[:index_end_number] in compare:
-                del dictTripStops[route_id][trip_id]
+                del dictTripStops[route_id][tripAndService_id]
             else :
                cursor = connection.cursor()
                cursor.execute('''SELECT stops.stop_id, stop_times.departure_time
@@ -81,7 +82,7 @@ def suppdoubleAndExtractStops(dictTrip): #from trips_id
                               WHERE stop_times.trip_id = "{}" AND stop_times.drop_off_type !="1"
                               ORDER BY stop_times.stop_sequence'''.format(trip_id))
                for stops in cursor.fetchall():
-                   dictTripStops[route_id][trip_id][stops[0]] = stops[1][:5]
+                   dictTripStops[route_id][tripAndService_id][stops[0]] = stops[1][:5]
                compare.append(trip_id[:index_end_number])
     return dictTripStops   
 
@@ -100,18 +101,50 @@ def extractStops(route, direction): #from route_id
     return {row[0] : row[1] for row in cursor} 
 
 
-def createTable(route, dictStops, dictSens) :
+
+def extractDays(route, dictSens): #dayTable = ['Jours de passage', 'LMV', ...,'S' ]
+    dayTable = ['Jours de passage']
+    dictRoute = dictSens[route]
+    for tripAndService_id, noth in dictRoute.items():
+        service_id = tripAndService_id[1]
+        cursor = connection.cursor()
+        cursor.execute('''SELECT monday, tuesday, wednesday, thursday, friday, saturday, sunday
+                       FROM calendar
+                       WHERE service_id = "{}"'''.format(service_id))
+        listDays = cursor.fetchall()
+        strday = ''
+        for day in listDays: #on écrit L, M, W... en fonction de si le bus passe tel jours
+            if day[0] == '1':
+                strday += 'L'
+            if day[1] == '1':
+                strday += 'M'
+            if day[2] == '1':
+                strday += 'W'
+            if day[3] == '1':
+                strday += 'J'
+            if day[4] == '1':
+                strday += 'V'
+            if day[5] == '1':
+                strday += 'S'
+            if day[6] == '1':
+                strday += 'D'
+        dayTable.append(strday)
+        print(dayTable)
+    return dayTable
+
+
+def createTable(route, dictStops, dictSens, dayTable) :
     table = [[stops] for stops in dictStops]
     dictRoute = dictSens[route]    
-    for trip, stops in dictRoute.items():
+    for tripAndService, stops in dictRoute.items():
         for i in range(len(dictStops)):
-            if table[i][0] in stops:
-                
+            if table[i][0] in stops: 
                 table[i].append(stops[table[i][0]])
             else :
                 table[i].append('-')
     for stops in table: #je change le stop_id pour le stop_name
         stops[0] = dictStops[stops[0]]
+    table.insert(0, dayTable)    #j'ajoute les jours devans
     return table            
 
     
@@ -120,8 +153,10 @@ def createCSV(dictSens0, dictSens1):
         fileName = route + '.csv' 
         dictStops0 = extractStops(route, 0) 
         dictStops1 = extractStops(route, 1)
-        table0 = createTable(route, dictStops0, dictSens0) #grille sens 0
-        table1 = createTable(route, dictStops1, dictSens1) #grille sens 1
+        dayTable0 = extractDays(route,dictSens0)
+        dayTable1 = extractDays(route,dictSens1)
+        table0 = createTable(route, dictStops0, dictSens0, dayTable0) #grille sens 0
+        table1 = createTable(route, dictStops1, dictSens1, dayTable1) #grille sens 1
         with open(fileName,'w', newline = '', encoding='utf-8') as file:
             obj = csv.writer(file, delimiter = ",")
             for element in table0:  #on écrit le sens 0
@@ -146,8 +181,10 @@ def createXLS(listRoutes, dictSens0, dictSens1):
         print('    -Feuille {} sur {}.'.format(compteur, nb_routes))
         dictStops0 = extractStops(route, 0) 
         dictStops1 = extractStops(route, 1)
-        table0 = createTable(route, dictStops0, dictSens0) #grille sens 0
-        table1 = createTable(route, dictStops1, dictSens1) #grille sens 1
+        dayTable0 = extractDays(route,dictSens0)
+        dayTable1 = extractDays(route,dictSens1)
+        table0 = createTable(route, dictStops0, dictSens0, dayTable0) #grille sens 0
+        table1 = createTable(route, dictStops1, dictSens1, dayTable1) #grille sens 1
         wb.create_sheet(title=route)
         sheet = wb[route]
         for i in table0:
@@ -197,7 +234,7 @@ try:
     createCSV(dictTripStops0, dictTripStops1)
     print('-'*50)
     print('Création du fichier .xlsx...')
-    createXLS(listRoutes, dictTripStops0, dictTripStops1)
+    #createXLS(listRoutes, dictTripStops0, dictTripStops1)
     print('-'*50)
     print("L'oppération c'est déroulée correctement")
     
