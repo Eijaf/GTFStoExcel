@@ -86,13 +86,32 @@ def GetstrDays(service_id):
     return strday
 
 def rewriteStrDAys(dictPeriodeTrips):
-    for trips, strday in dictPeriodeTrips.items():
+    for trips, strday0 in dictPeriodeTrips.items():
+        strday = ''
+        #right order (case of : JVLMa to LMaJV)
+        if 'L'in strday0:
+            strday +='L'
+        if 'Ma'in strday0:
+            strday +='Ma'
+        if 'Me'in strday0:
+            strday +='Me'
+        if 'J'in strday0:
+            strday +='J'
+        if 'V'in strday0:
+            strday +='V'
+        if 'S'in strday0:
+            strday +='S'
+        if 'D'in strday0:
+            strday +='D'        
+        #better
         if strday == 'LMaMeJV':
             dictPeriodeTrips[trips] = 'LàV'
         elif strday == 'LMaMeJVS':
             dictPeriodeTrips[trips] = 'LàS'
         elif strday == 'Me':
             dictPeriodeTrips[trips] = 'Mer'
+        else:
+            dictPeriodeTrips[trips] = strday
     return dictPeriodeTrips      
 
 def GetstrPeriode(service_id) :
@@ -210,8 +229,8 @@ def createCSV(dictSens0, dictSens1, dicDays0, dicDays1, dicPeriodRoute0, dicPeri
 
 def createXLS(listRoutes, dictSens0, dictSens1,dicDays0, dicDays1, dicPeriodRoute0, dicPeriodRoute1):
     wb = Workbook()
-    wb.save('Horraires_GTFS.xlsx')
-    wb = load_workbook('Horraires_GTFS.xlsx')
+    wb.save('Horaires_GTFS.xlsx')
+    wb = load_workbook('Horaires_GTFS.xlsx')
     sheet = wb.active
     sheet.title = 'Informations'
     sheet['A1'] = 'Ce fichier contient les routes :'
@@ -244,7 +263,7 @@ def createXLS(listRoutes, dictSens0, dictSens1,dicDays0, dicDays1, dicPeriodRout
         for i in table1:
             sheet.append(i) 
         compteur +=1
-    wb.save('Horraires_GTFS.xlsx')
+    wb.save('Horaires_GTFS.xlsx')
 
 try:
     print('Création de la base de données...')
