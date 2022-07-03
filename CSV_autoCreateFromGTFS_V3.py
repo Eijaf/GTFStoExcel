@@ -48,11 +48,13 @@ def extractTrip(listRoutes, direction):
     dictTrip = {}
     for route in listRoutes:
         cursor = connection.cursor()
-        cursor.execute('''SELECT trips.trip_id, service_id
+        cursor.execute('''SELECT trips.trip_id, trips.service_id, trips.route_id
                        FROM trips
                        JOIN stop_times
                        ON stop_times.trip_id = trips.trip_id
-                       WHERE trips.route_id = "{}" AND trips.direction_id = "{}"
+                       JOIN routes
+                       ON routes.route_id = trips.route_id
+                       WHERE routes.route_short_name = "{}" AND trips.direction_id = "{}"
                        ORDER BY stop_times.departure_time
                         '''.format(route, direction))
         dictTrip[route] = {key : {} for key in cursor}  #je prend à la fois trip_id et service id.
@@ -115,7 +117,7 @@ def suppdoubleAndExtractStops(dictTrip, listRoute): #from trips_id And extrtac d
     dictTripStops = deepcopy(dictTrip)
     dicDays = {} #servira a stoké les trips de route avec les jour de passage
     dicPeriode = {}
-    for route_id, value in dictTrip.items():
+    for route_short, value in dictTrip.items():
         compare = []                #list of all trips number already pass(not necessarly same day)
         dictDaysTrips = {}
         dictPeriodeTrips = {}
@@ -125,12 +127,8 @@ def suppdoubleAndExtractStops(dictTrip, listRoute): #from trips_id And extrtac d
             tripNumber = findTripNumber(trip_id)                     
             if tripNumber in compare:                
                 #ajouter jours que j'enleve au même num dans le dictionnaire a numéro comme clé
-                
-                
-                dictDaysTrips[tripNumber] += GetstrDays(service_id) #+= cause already exist
-                
-                
-                del dictTripStops[route_id][tripAndService_id] #delet the double
+                dictDaysTrips[tripNumber] += GetstrDays(service_id) #+= cause already exist                
+                del dictTripStops[route_short][tripAndService_id] #delet the double
             else :
                cursor = connection.cursor()
                cursor.execute('''SELECT stops.stop_id, stop_times.departure_time
@@ -141,18 +139,18 @@ def suppdoubleAndExtractStops(dictTrip, listRoute): #from trips_id And extrtac d
                               ORDER BY stop_times.stop_sequence'''.format(trip_id))
                #ET récupérer jours dans un dictionnaire avec pour clé le numéro devant le trip id et ROUTE ID pour pouvoir l'utiliser au bon moment
                for stops in cursor.fetchall():
-                   dictTripStops[route_id][tripAndService_id][stops[0]] = stops[1][:5]
+                   dictTripStops[route_short][tripAndService_id][stops[0]] = stops[1][:5]
                dictDaysTrips[tripNumber] = GetstrDays(service_id)
                dictPeriodeTrips[tripNumber] = GetstrPeriode(service_id)
                compare.append(tripNumber)
          
         dictDaysTrips = rewriteStrDAys(dictDaysTrips) #on réécrit le cat régulier des jours
-        dicDays[route_id] = dictDaysTrips
-        dicPeriode[route_id] = dictPeriodeTrips
+        dicDays[route_short] = dictDaysTrips
+        dicPeriode[route_short] = dictPeriodeTrips
     return dictTripStops, dicDays, dicPeriode
 
 
-def extractStops(route, direction): #from route_id
+def extractStops(route, direction): #from route_short name
     cursor = connection.cursor()
     cursor. execute('''SELECT stops.stop_id ,stops.stop_name 
                     FROM stops
@@ -160,23 +158,27 @@ def extractStops(route, direction): #from route_id
                     ON stop_times.stop_id = stops.stop_id
                     JOIN trips
                     ON trips.trip_id = stop_times.trip_id
-                    WHERE trips.route_id = "{}" AND trips.direction_id = {} AND stop_times.drop_off_type !="1"
+                    JOIN routes
+                    ON routes.route_id = trips.route_id
+                    WHERE routes.route_short_name = "{}" AND trips.direction_id = {} AND stop_times.drop_off_type !="1"
                     GROUP BY stops.stop_id
                     ORDER BY stop_times.stop_sequence ASC'''.format(route, direction))
     return {row[0] : row[1] for row in cursor} 
 
 
 def createTable(route, dictStops, dictSens, dicDayTrip, dicPeriodTrip) :
-    table = [['Début de validité'], ['Fin de validité'], ['Jours de passage']] + [[stops] for stops in dictStops]
+    table = [['Nom de la route'], ['Début de validité'], ['Fin de validité'], ['Jours de passage']] + [[stops] for stops in dictStops]
     dictRoute = dictSens[route]    
     for tripAndService, stops in dictRoute.items():
         trip_id = tripAndService[0]
         tripNumber = findTripNumber(trip_id)        
         table[0].append(dicPeriodTrip[tripNumber][0]) #début de validité
         table[1].append(dicPeriodTrip[tripNumber][1]) #fin de validité
-        table[2].append(dicDayTrip[tripNumber]) #jours de passage du voyage        
+        table[2].append(tripAndService[2]) #route_id for information of 'ad'
+        table[3].append(dicDayTrip[tripNumber]) #jours de passage du voyage
         
-        for i in range(3, len(dictStops)+3):     #heure de passage du voyage
+        
+        for i in range(4, len(dictStops)+4):     #heure de passage du voyage
             if table[i][0] in stops: 
                 table[i].append(stops[table[i][0]])
             else :
@@ -254,7 +256,7 @@ try:
         
     print('-'*50)    
     print('Récupération des routes...')
-    cursor = connection.execute("SELECT route_id FROM routes") #Je récupère la liste de toutes les routes
+    cursor = connection.execute("SELECT route_short_name FROM routes GROUP BY route_short_name") #Je récupère la liste de toutes les routes
     listRoutes = [row[0] for row in cursor]
     print('Routes trouvées : ',listRoutes)
     
@@ -271,9 +273,9 @@ try:
     result = suppdoubleAndExtractStops(dictTrip1, listRoutes)
     dictTripStops1, dicDays1, dicPeriodRoute1 = result[0], result[1], result[2]
     print('-'*50)
-    print('Création des fichiers .csv...')
-    createCSV(dictTripStops0, dictTripStops1, dicDays0, dicDays1, dicPeriodRoute0, dicPeriodRoute1)
-    print('-'*50)
+    # print('Création des fichiers .csv...')
+    # createCSV(dictTripStops0, dictTripStops1, dicDays0, dicDays1, dicPeriodRoute0, dicPeriodRoute1)
+    # print('-'*50)
     print('Création du fichier .xlsx...')
     createXLS(listRoutes, dictTripStops0, dictTripStops1, dicDays0, dicDays1, dicPeriodRoute0, dicPeriodRoute1)
     print('-'*50)
