@@ -167,7 +167,7 @@ def extractStops(route, direction): #from route_short name
 
 
 def createTable(route, dictStops, dictSens, dicDayTrip, dicPeriodTrip) :
-    table = [['Nom de la route'], ['Début de validité'], ['Fin de validité'], ['Jours de passage']] + [[stops] for stops in dictStops]
+    table = [ ['Début de validité'], ['Fin de validité'],['Nom de la route'], ['Jours de passage']] + [[stops] for stops in dictStops]
     dictRoute = dictSens[route]    
     for tripAndService, stops in dictRoute.items():
         trip_id = tripAndService[0]
@@ -182,7 +182,7 @@ def createTable(route, dictStops, dictSens, dicDayTrip, dicPeriodTrip) :
             if table[i][0] in stops: 
                 table[i].append(stops[table[i][0]])
             else :
-                table[i].append('-')
+                table[i].append('|')
     for stops in table: #je change le stop_id pour le stop_name
         try :
             stops[0] = dictStops[stops[0]]
@@ -230,6 +230,14 @@ def createXLS(listRoutes, dictSens0, dictSens1,dicDays0, dicDays1, dicPeriodRout
         table1 = createTable(route, dictStops1, dictSens1, dicDayTrip1, dicPeriodTrip1) #grille sens 1
         wb.create_sheet(title=route)
         sheet = wb[route]
+        
+        cursor = connection.cursor()
+        cursor.execute('''SELECT route_short_name, route_long_name
+                        FROM routes
+                        WHERE route_short_name = "{}"'''.format(route))
+        routeName = cursor.fetchall()[0]
+        sheet.append([routeName[0] + ' - ' + routeName[1]])
+        sheet.append([])
         for i in table0:
             sheet.append(i) 
         sheet.append([]) 
