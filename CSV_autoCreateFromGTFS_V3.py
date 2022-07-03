@@ -144,7 +144,7 @@ def createTable(route, dictStops, dictSens, dicDayTrip) :
     for tripAndService, stops in dictRoute.items():
         trip_id = tripAndService[0]
         tripNumber = findTripNumber(trip_id)
-        table[0].append(dicDayTrip[tripNumber]) #jours de passage du voyage
+        table[1].append(dicDayTrip[tripNumber]) #jours de passage du voyage
         
         
         
