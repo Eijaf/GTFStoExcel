@@ -139,7 +139,7 @@ def extractStops(route, direction): #from route_id
 
 
 def createTable(route, dictStops, dictSens, dicDayTrip) :
-    table = [['Jours de passage']] + [[stops] for stops in dictStops]
+    table = [['Période de validité'], ['Jours de passage']] + [[stops] for stops in dictStops]
     dictRoute = dictSens[route]    
     for tripAndService, stops in dictRoute.items():
         trip_id = tripAndService[0]
@@ -148,7 +148,7 @@ def createTable(route, dictStops, dictSens, dicDayTrip) :
         
         
         
-        for i in range(1, len(dictStops)+1):     #heure de passagfe du voyage
+        for i in range(2, len(dictStops)+2):     #heure de passagfe du voyage
             if table[i][0] in stops: 
                 table[i].append(stops[table[i][0]])
             else :
@@ -156,7 +156,7 @@ def createTable(route, dictStops, dictSens, dicDayTrip) :
     for stops in table: #je change le stop_id pour le stop_name
         try :
             stops[0] = dictStops[stops[0]]
-        except:
+        except:  #to avoid key problem when at 'jour de validité'
             pass
     return table            
     
