@@ -4,8 +4,7 @@ Created on Tue Jun 21 21:34:30 2022
 
 @author: Adrien SCHWEGLER
 """
-import csv, sqlite3,os
-from openpyxl import load_workbook, Workbook
+import csv, sqlite3, os, openpyxl
 from copy import deepcopy
 
 
@@ -150,7 +149,7 @@ def suppdoubleAndExtractStops(dictTrip, listRoute): #from trips_id And extrtac d
                 del dictTripStops[route_short][tripAndService_id] #delet the double
             else :
                cursor = connection.cursor()
-               cursor.execute('''SELECT stops.stop_id, stop_times.departure_time
+               cursor.execute('''SELECT stops.stop_id, stop_times.departure_time, stop_times.pickup_type
                               FROM stops
                               JOIN stop_times
                               ON stop_times.stop_id = stops.stop_id 
@@ -158,7 +157,7 @@ def suppdoubleAndExtractStops(dictTrip, listRoute): #from trips_id And extrtac d
                               ORDER BY stop_times.stop_sequence'''.format(trip_id))
                #ET récupérer jours dans un dictionnaire avec pour clé le numéro devant le trip id et ROUTE ID pour pouvoir l'utiliser au bon moment
                for stops in cursor.fetchall():
-                   dictTripStops[route_short][tripAndService_id][stops[0]] = stops[1][:5]
+                   dictTripStops[route_short][tripAndService_id][stops[0]] = stops[1][:5] + ' ✆' if stops[2]=='2' else stops[1][:5]
                dictDaysTrips[tripNumber] = GetstrDays(service_id)
                dictPeriodeTrips[tripNumber] = GetstrPeriode(service_id)
                compare.append(tripNumber)
@@ -186,7 +185,7 @@ def extractStops(route, direction): #from route_short name
 
 
 def createTable(route, dictStops, dictSens, dicDayTrip, dicPeriodTrip) :
-    table = [ ['Début de validité'], ['Fin de validité'],['Nom de la route'], ['Jours de passage']] + [[stops] for stops in dictStops]
+    table = [ ['Début de validité'], ['Fin de validité'],[''], ['Jours de circulation']] + [[stops] for stops in dictStops]
     dictRoute = dictSens[route]    
     for tripAndService, stops in dictRoute.items():
         trip_id = tripAndService[0]
@@ -228,12 +227,15 @@ def createCSV(dictSens0, dictSens1, dicDays0, dicDays1, dicPeriodRoute0, dicPeri
 
 
 def createXLS(listRoutes, dictSens0, dictSens1,dicDays0, dicDays1, dicPeriodRoute0, dicPeriodRoute1):
-    wb = Workbook()
+    wb = openpyxl.Workbook()
     wb.save('Horaires_GTFS.xlsx')
-    wb = load_workbook('Horaires_GTFS.xlsx')
+    wb = openpyxl.load_workbook('Horaires_GTFS.xlsx')
     sheet = wb.active
     sheet.title = 'Informations'
     sheet['A1'] = 'Ce fichier contient les routes :'
+    
+    ad_style = openpyxl.styles.NamedStyle(name = 'ad_style')
+    ad_style.fill = openpyxl.styles.PatternFill(patternType = 'solid', fgColor = 'CCCCCC')
     
     for element in listRoutes:
          sheet.append([element])
@@ -249,19 +251,28 @@ def createXLS(listRoutes, dictSens0, dictSens1,dicDays0, dicDays1, dicPeriodRout
         table1 = createTable(route, dictStops1, dictSens1, dicDayTrip1, dicPeriodTrip1) #grille sens 1
         wb.create_sheet(title=route)
         sheet = wb[route]
-        
         cursor = connection.cursor()
         cursor.execute('''SELECT route_short_name, route_long_name
                         FROM routes
                         WHERE route_short_name = "{}"'''.format(route))
         routeName = cursor.fetchall()[0]
-        sheet.append([routeName[0] + ' - ' + routeName[1]])
+        sheet['A1'] = routeName[0] + ' - ' + routeName[1]        
         sheet.append([])
         for i in table0:
             sheet.append(i) 
         sheet.append([]) 
         for i in table1:
-            sheet.append(i) 
+            sheet.append(i)
+        
+        for column in sheet.columns: #page layout
+            for cell in column:
+                try:
+                    if '✆' in cell.value:
+                        cell.style = ad_style
+                    if cell.column != 1:
+                        cell.alignment = openpyxl.styles.Alignment(horizontal = 'center')
+                except:
+                    pass
         compteur +=1
     wb.save('Horaires_GTFS.xlsx')
 
