@@ -131,6 +131,13 @@ def findTripNumber(trip_id):
             break#if not : the number has end so break the loop
     return trip_id[:index_end_number]       
 
+def getRouteColor(route):
+    cursor = connection.cursor()
+    cursor.execute('''SELECT route_color
+                       FROM routes
+                       WHERE route_short_name = "{}"'''.format(route))
+    return cursor.fetchall()[0][0]
+
 def suppdoubleAndExtractStops(dictTrip, listRoute): #from trips_id And extrtac days
     dictTripStops = deepcopy(dictTrip)
     dicDays = {} #servira a stoké les trips de route avec les jour de passage
@@ -185,7 +192,7 @@ def extractStops(route, direction): #from route_short name
 
 
 def createTable(route, dictStops, dictSens, dicDayTrip, dicPeriodTrip) :
-    table = [ ['Début de validité'], ['Fin de validité'],[''], ['Jours de circulation']] + [[stops] for stops in dictStops]
+    table = [ ['Début de validité'], ['Fin de validité'],[''], ['Jours de circulation'],['']] + [[stops] for stops in dictStops]
     dictRoute = dictSens[route]    
     for tripAndService, stops in dictRoute.items():
         trip_id = tripAndService[0]
@@ -196,7 +203,7 @@ def createTable(route, dictStops, dictSens, dicDayTrip, dicPeriodTrip) :
         table[3].append(dicDayTrip[tripNumber]) #jours de passage du voyage
         
         
-        for i in range(4, len(dictStops)+4):     #heure de passage du voyage
+        for i in range(5, len(dictStops)+5):     #heure de passage du voyage
             if table[i][0] in stops: 
                 table[i].append(stops[table[i][0]])
             else :
@@ -259,20 +266,25 @@ def createXLS(listRoutes, dictSens0, dictSens1,dicDays0, dicDays1, dicPeriodRout
         sheet['A1'] = routeName[0] + ' - ' + routeName[1]        
         sheet.append([])
         for i in table0:
-            sheet.append(i) 
+            sheet.append(i)
         sheet.append([]) 
         for i in table1:
             sheet.append(i)
-        
-        for column in sheet.columns: #page layout
+            
+        #page layout
+        borderStyle = openpyxl.styles.Side(style = 'thin', color = '{}'.format(getRouteColor(route)))
+        for column in sheet.columns: 
             for cell in column:
                 try:
                     if '✆' in cell.value:
                         cell.style = ad_style
-                    if cell.column != 1:
-                        cell.alignment = openpyxl.styles.Alignment(horizontal = 'center')
-                except:
+                except: #if celle empty : none so no iterable
                     pass
+                if cell.value != None:
+                    cell.border = openpyxl.styles.Border(left = borderStyle, right = borderStyle, top = borderStyle, bottom = borderStyle)
+                if cell.column != 1:
+                    cell.alignment = openpyxl.styles.Alignment(horizontal = 'center')
+                
         compteur +=1
     wb.save('Horaires_GTFS.xlsx')
 
