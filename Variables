@@ -1,0 +1,39 @@
+connection = connection objet to sqlite base
+
+csvfile = string of the name of the curent csv file in use
+
+cursor = cursor object to interact with the DataBase
+
+dicDays = { route_short_name : dictDaysTrips, ..., route_short_name : dictDaysTrips}
+
+dictDaysTrips = { tripNumber : str of the day the trip occure,
+                  ...,
+                  tripNumber : str of the day the trip occure}, all the trip are from the same route and direction
+
+dicPeriod = dicDays = { route_short_name : dictPeriodeTrips, ..., route_short_name : dictPeriodeTrips}
+
+dictPeriodeTrips = { tripNumber : (str of the date the trip start, str of the date it end),
+                  ...,
+                  tripNumber : (str of the date the trip start, str of the date it end)}, all the trip are from the same route and direction
+                  
+dictStops = {stop_id : stop_name,...,stop_id : stop_name} for 1 given route and direction
+
+dictTrip = { route_short_name : { (trip_id, service_id) : {},..., (trip_id, service_id) : {} },
+            ...,
+            route_short_name : { (trip_id, service_id) : {},..., (trip_id, service_id) : {} } }
+            
+dictTripSens = { route_short_name : { (trip_id, service_id) : {stop_id : stop_time_departure,..., stop_id : stop_time_departure},..., (trip_id, service_id) : {stop_id : stop_time_departure,..., stop_id : stop_time_departure} },
+            ...,
+            route_short_name : { (trip_id, service_id) : {stop_id : stop_time_departure,..., stop_id : stop_time_departure},..., (trip_id, service_id) : {stop_id : stop_time_departure,..., stop_id : stop_time_departure} } }
+
+listDays = [Monday, ...,Sunday], 0 for trip do not occure this day, 1 for trip occure this day
+
+listRoutes = list of all the route group by rout_short_name
+
+necessaryFiles = File of the GTFS needed to execute this Program
+
+table_info = data extrect from csv file to create dataBase table : [( first column of date), ..., (last column of data)]
+
+tripNumber : in some case, several trip_id begins by the same number, in that case it's the same trip but different day, we want to regroup them
+
+result = (dictTripStops, dicDays, dicPeriodRoute)  is the return of a fonction
