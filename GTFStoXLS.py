@@ -164,7 +164,7 @@ def createTable(route, dictStops, dictSens, dicDayTrip, dicPeriodTrip) :
             if table[i][0] in stops: 
                 table[i].append(stops[table[i][0]])
             else :
-                table[i].append('|')
+                table[i].append('-')
 
     for stops in table: #change stop_id for the matching stop_name
         try :
@@ -196,11 +196,11 @@ def createXLS(listRoutes, dictSens0, dictSens1,dicDays0, dicDays1, dicPeriodRout
     sheet['A1'] = 'Ce fichier contient les routes :'
     for element in listRoutes:
         sheet.append([element])
-    
-    
+        
+        
     ad_style = openpyxl.styles.NamedStyle(name = 'ad_style')
     ad_style.fill = openpyxl.styles.PatternFill(patternType = 'solid', fgColor = 'CCCCCC')
-    
+
     compteur = 1
     nb_routes = len(listRoutes)
     for route in listRoutes : #création des feuilles
@@ -211,35 +211,39 @@ def createXLS(listRoutes, dictSens0, dictSens1,dicDays0, dicDays1, dicPeriodRout
         dicPeriodTrip0, dicPeriodTrip1 = dicPeriodRoute0[route], dicPeriodRoute1[route]
         table0 = createTable(route, dictStops0, dictSens0, dicDayTrip0, dicPeriodTrip0) #grille sens 0
         table1 = createTable(route, dictStops1, dictSens1, dicDayTrip1, dicPeriodTrip1) #grille sens 1
-        
+
         wb.create_sheet(title=route)
         sheet = wb[route]
-        
+ 
         routeName = getRouteName(route)
         sheet['A1'] = routeName[0] + ' - ' + routeName[1]   
-        
+
         sheet.append([])
-        
+
         for i in table0:
             sheet.append(i)
         sheet.append([]) 
+        sheet.append([]) 
         for i in table1:
             sheet.append(i)
-            
+
         #page layout
-        borderStyle = openpyxl.styles.Side(style = 'thin', color = '{}'.format(getRouteColor(route)))
+        color = getRouteColor(route)        
+        sheet.sheet_properties.tabColor = color
+
         for column in sheet.columns: 
             for cell in column:
                 try:
-                    if '✆' in cell.value:
-                        cell.style = ad_style
+                    if not cell.row % 2:
+                        if '✆' in cell.value:
+                            cell.style = ad_style
+                        else :
+                            cell.fill = openpyxl.styles.PatternFill(patternType = 'lightDown', fgColor = color)
                 except: #if celle empty : none so no iterable
                     pass
-                if cell.value != None:
-                    cell.border = openpyxl.styles.Border(left = borderStyle, right = borderStyle, top = borderStyle, bottom = borderStyle)
                 if cell.column != 1:
                     cell.alignment = openpyxl.styles.Alignment(horizontal = 'center')
-                
+
         compteur +=1
     wb.save('Horaires_GTFS.xlsx')
 
