@@ -199,7 +199,7 @@ def createXLS(listRoutes, dictSens0, dictSens1,dicDays0, dicDays1, dicPeriodRout
         
         
     ad_style = openpyxl.styles.NamedStyle(name = 'ad_style')
-    ad_style.fill = openpyxl.styles.PatternFill(patternType = 'solid', fgColor = 'CCCCCC')
+    ad_style.fill = openpyxl.styles.PatternFill(patternType = 'solid', fgColor = 'DDDDDD')
 
     compteur = 1
     nb_routes = len(listRoutes)
