@@ -165,7 +165,7 @@ def createTable(route, dictStops, dictSens, dicDayTrip, dicPeriodTrip) :
                 table[i].append(stops[table[i][0]])
             else :
                 table[i].append('-')
-
+	
     for stops in table: #change stop_id for the matching stop_name
         try :
             stops[0] = dictStops[stops[0]]
@@ -228,16 +228,21 @@ def createXLS(listRoutes, dictSens0, dictSens1,dicDays0, dicDays1, dicPeriodRout
             sheet.append(i)
 
         #page layout
-        color = getRouteColor(route)        
-        sheet.sheet_properties.tabColor = color
-
+        iscolor = 0
+        color = getRouteColor(route)
+		try:
+        	sheet.sheet_properties.tabColor = color
+			iscolor = 1
+		except:
+			pass
+			
         for column in sheet.columns: 
             for cell in column:
                 try:
                     if not cell.row % 2:
                         if '✆' in cell.value:
                             cell.style = ad_style
-                        else :
+                        elif iscolor :
                             cell.fill = openpyxl.styles.PatternFill(patternType = 'lightDown', fgColor = color)
                 except: #if celle empty : none so no iterable
                     pass
