@@ -249,7 +249,9 @@ def createXLS(listRoutes, dictSens0, dictSens1,dicDays0, dicDays1, dicPeriodRout
                 if cell.column != 1:
                     cell.alignment = openpyxl.styles.Alignment(horizontal = 'center')
 
-        compteur +=1
+	if not iscolor:
+		print('Couleur non renseigner pour la route {}'.format(route))
+	compteur +=1
     wb.save('Horaires_GTFS.xlsx')
 
 try:
