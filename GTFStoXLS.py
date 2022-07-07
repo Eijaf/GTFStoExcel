@@ -203,6 +203,7 @@ def createXLS(listRoutes, dictSens0, dictSens1,dicDays0, dicDays1, dicPeriodRout
 
     compteur = 1
     nb_routes = len(listRoutes)
+    misscolor = ''
     for route in listRoutes : #création des feuilles
         print('    -Feuille {} sur {}.'.format(compteur, nb_routes))
         dictStops0 = extractStops(route, 0) 
@@ -234,6 +235,7 @@ def createXLS(listRoutes, dictSens0, dictSens1,dicDays0, dicDays1, dicPeriodRout
             sheet.sheet_properties.tabColor = color
             iscolor = 1
         except:
+            misscolor += route + ', '
             pass
 			
         for column in sheet.columns: 
@@ -249,9 +251,9 @@ def createXLS(listRoutes, dictSens0, dictSens1,dicDays0, dicDays1, dicPeriodRout
                 if cell.column != 1:
                     cell.alignment = openpyxl.styles.Alignment(horizontal = 'center')
 
-    if not iscolor:
-        print('Couleur non renseignée pour la route {}'.format(route))
-    compteur +=1
+        compteur +=1
+    if misscolor !='':
+            print('Couleur non renseignée pour les routes {}'.format(misscolor))    
     wb.save('Horaires_GTFS.xlsx')
 
 try:
