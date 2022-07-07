@@ -230,11 +230,11 @@ def createXLS(listRoutes, dictSens0, dictSens1,dicDays0, dicDays1, dicPeriodRout
         #page layout
         iscolor = 0
         color = getRouteColor(route)
-		try:
-        	sheet.sheet_properties.tabColor = color
-			iscolor = 1
-		except:
-			pass
+        try:
+            sheet.sheet_properties.tabColor = color
+            iscolor = 1
+        except:
+            pass
 			
         for column in sheet.columns: 
             for cell in column:
@@ -249,9 +249,9 @@ def createXLS(listRoutes, dictSens0, dictSens1,dicDays0, dicDays1, dicPeriodRout
                 if cell.column != 1:
                     cell.alignment = openpyxl.styles.Alignment(horizontal = 'center')
 
-	if not iscolor:
-		print('Couleur non renseignée pour la route {}'.format(route))
-	compteur +=1
+    if not iscolor:
+        print('Couleur non renseignée pour la route {}'.format(route))
+    compteur +=1
     wb.save('Horaires_GTFS.xlsx')
 
 try:
