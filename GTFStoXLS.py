@@ -185,6 +185,14 @@ def getRouteColor(route):
                        WHERE route_short_name = "{}"'''.format(route))
     return cursor.fetchall()[0][0]
 
+def color50(color):
+    rgb = tuple(int(color[i:i+2], 16) for i in (0, 2, 4))
+    rgb50 = []
+    for i in rgb : 
+        rgb50.append(int(0.5 * i + (1 - 0.5) * 255))
+    return '{:X}{:X}{:X}'.format(rgb50[0], rgb50[1], rgb50[2])
+    
+
 def createXLS(listRoutes, dictSens0, dictSens1,dicDays0, dicDays1, dicPeriodRoute0, dicPeriodRoute1):
     wb = openpyxl.Workbook()
     wb.save('Horaires_GTFS.xlsx')
@@ -197,10 +205,11 @@ def createXLS(listRoutes, dictSens0, dictSens1,dicDays0, dicDays1, dicPeriodRout
     for element in listRoutes:
         sheet.append([element])
         
-        
+    borderStyle = openpyxl.styles.Side(style = 'medium', color = 'FFFFFF')   #voir pour plus fin
     ad_style = openpyxl.styles.NamedStyle(name = 'ad_style')
     ad_style.fill = openpyxl.styles.PatternFill(patternType = 'solid', fgColor = 'DDDDDD')
-
+    ad_style.border = openpyxl.styles.Border(left = borderStyle, right = borderStyle, top = borderStyle, bottom = borderStyle)
+    
     compteur = 1
     nb_routes = len(listRoutes)
     misscolor = ''
@@ -223,29 +232,38 @@ def createXLS(listRoutes, dictSens0, dictSens1,dicDays0, dicDays1, dicPeriodRout
 
         for i in table0:
             sheet.append(i)
-        sheet.append([]) 
-        sheet.append([]) 
+        sheet.append([])
+        try:
+            if not int(sheet.calculate_dimension()[-2:]) %2:
+                sheet.append([])
+        except:
+            if not int(sheet.calculate_dimension()[-1:]) %2:
+                sheet.append([])
+                
         for i in table1:
             sheet.append(i)
 
         #page layout
         iscolor = 0
         color = getRouteColor(route)
+        colorlight = color50(color)
         try:
             sheet.sheet_properties.tabColor = color
             iscolor = 1
         except:
             misscolor += route + ', '
             pass
-			
+
+    
         for column in sheet.columns: 
             for cell in column:
+                cell.border = openpyxl.styles.Border(left = borderStyle, right = borderStyle, top = borderStyle, bottom = borderStyle)
                 try:
                     if not cell.row % 2:
                         if '✆' in cell.value:
                             cell.style = ad_style
                         elif iscolor :
-                            cell.fill = openpyxl.styles.PatternFill(patternType = 'lightDown', fgColor = color)
+                            cell.fill = openpyxl.styles.PatternFill(patternType = 'solid', fgColor = colorlight)
                 except: #if celle empty : none so no iterable
                     pass
                 if cell.column != 1:
