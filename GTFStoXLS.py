@@ -164,7 +164,7 @@ def extractStops(route, direction): #retrun the stops in the right order
     return dictops
 
 def createTable(route, dictStops, dictSens, dicDayTrip, dicPeriodTrip) :
-    table = [ ['','Début de validité'], ['','Fin de validité'],[''], ['','Jours de circulation'],['']] + [ [stops] for stops in dictStops]
+    table = [ ['','Début de validité'], ['','Fin de validité'],['',''], ['','']] + [ [stops] for stops in dictStops]
     dictRoute = dictSens[route]    
     for tripAndService, stops in dictRoute.items():
         trip_id = tripAndService[0]
@@ -173,7 +173,7 @@ def createTable(route, dictStops, dictSens, dicDayTrip, dicPeriodTrip) :
         table[1].append(dicPeriodTrip[tripNumber][1]) #fin de validité
         table[2].append(tripAndService[2]) #route_id for information of 'ad'
         table[3].append(dicDayTrip[tripNumber]) #jours de passage du voyage
-        for i in range(5, len(dictStops)+5):     #heure de passage du voyage
+        for i in range(4, len(dictStops)+4):     #heure de passage du voyage
             if table[i][0] in stops: 
                 table[i].append(stops[table[i][0]])
             else :
@@ -274,13 +274,15 @@ def createXLS(listRoutes, dictSens0, dictSens1,dicDays0, dicDays1, dicPeriodRout
         for column in sheet.columns: 
             for cell in column:
                 try:
-                    if not cell.row % 2:
+                    if cell.row % 2:
                         if '✆' in cell.value:
                             cell.style = ad_style
                         elif iscolor and cell.column != 1 :
                             cell.fill = openpyxl.styles.PatternFill(patternType = 'solid', fgColor = colorlight)
                 except: #if celle empty : none so no iterable
                     pass
+                if cell.column == 1:
+                    cell.font = openpyxl.styles.Font(bold = True)
                 if sheet.cell(cell.row, 1).value != None and sheet.cell(cell.row, 1).value != '':
                     cell.border = openpyxl.styles.Border(left = borderStyle, right = borderStyle, top = borderCity)
                 else:
