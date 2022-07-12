@@ -97,8 +97,6 @@ def rewriteStrDAys(dictDaysTrips):
             dictDaysTrips[trips] = 'LàV'
         elif strday == 'LMaMeJVS':
             dictDaysTrips[trips] = 'LàS'
-        elif strday == 'Me':
-            dictDaysTrips[trips] = 'Mer'
         else:
             dictDaysTrips[trips] = strday
     return dictDaysTrips
@@ -136,22 +134,37 @@ def suppdoubleAndExtractStops(dictTrip, listRoute):
         dicPeriode[route_short] = dictPeriodeTrips
     return dictTripStops, dicDays, dicPeriode
 
+def extractCity(dictops):
+    previous = ''
+    for stop in dictops:
+        id_city = stop[:3]
+        if id_city != previous :
+            cursor.execute('''SELECT city_name
+                               FROM city
+                               WHERE city_id="{}"'''.format(id_city))
+            dictops[stop][0] = cursor.fetchone()[0]
+            previous = id_city      
+    return dictops
+
 def extractStops(route, direction): #retrun the stops in the right order
-    cursor. execute('''SELECT stops.stop_id ,stops.stop_name 
+    cursor. execute('''SELECT stops.stop_id ,stops.stop_name
                     FROM stops
                     JOIN stop_times
                     ON stop_times.stop_id = stops.stop_id
                     JOIN trips
-                    ON trips.trip_id = stop_times.trip_id
+                   ON trips.trip_id = stop_times.trip_id
                     JOIN routes
                     ON routes.route_id = trips.route_id
                     WHERE routes.route_short_name = "{}" AND trips.direction_id = '{}' AND stop_times.drop_off_type !="1"
                     GROUP BY stops.stop_id HAVING MIN(stop_times.departure_time)
-                    ORDER BY stop_times.departure_time ASC'''.format(route, direction))          
-    return {row[0] : row[1] for row in cursor}
+                    ORDER BY stop_times.departure_time ASC'''.format(route, direction))
+    dictops = {row[0] : ['',row[1]] for row in cursor}
+    if 'city.txt' in isPossibleFile :
+        dictops = extractCity(dictops)
+    return dictops
 
 def createTable(route, dictStops, dictSens, dicDayTrip, dicPeriodTrip) :
-    table = [ ['Début de validité'], ['Fin de validité'],[''], ['Jours de circulation'],['']] + [[stops] for stops in dictStops]
+    table = [ ['','Début de validité'], ['','Fin de validité'],[''], ['','Jours de circulation'],['']] + [ [stops] for stops in dictStops]
     dictRoute = dictSens[route]    
     for tripAndService, stops in dictRoute.items():
         trip_id = tripAndService[0]
@@ -166,9 +179,11 @@ def createTable(route, dictStops, dictSens, dicDayTrip, dicPeriodTrip) :
             else :
                 table[i].append('-')
 	
-    for stops in table: #change stop_id for the matching stop_name
+    for stops in table: #change stop_id for the matching stop_name + city_name
         try :
-            stops[0] = dictStops[stops[0]]
+            stop = stops[0]
+            stops[0] = dictStops[stop][1]
+            stops.insert(0,dictStops[stop][0])
         except:  #to avoid key problem when at 'jour de validité'
             pass
     return table
@@ -206,9 +221,10 @@ def createXLS(listRoutes, dictSens0, dictSens1,dicDays0, dicDays1, dicPeriodRout
         sheet.append([element])
         
     borderStyle = openpyxl.styles.Side(style = 'medium', color = 'FFFFFF')   #voir pour plus fin
+    borderCity = openpyxl.styles.Side(style = 'dashed', color = '999999')
     ad_style = openpyxl.styles.NamedStyle(name = 'ad_style')
     ad_style.fill = openpyxl.styles.PatternFill(patternType = 'solid', fgColor = 'DDDDDD')
-    ad_style.border = openpyxl.styles.Border(left = borderStyle, right = borderStyle, top = borderStyle, bottom = borderStyle)
+    
     
     compteur = 1
     nb_routes = len(listRoutes)
@@ -257,16 +273,19 @@ def createXLS(listRoutes, dictSens0, dictSens1,dicDays0, dicDays1, dicPeriodRout
     
         for column in sheet.columns: 
             for cell in column:
-                cell.border = openpyxl.styles.Border(left = borderStyle, right = borderStyle, top = borderStyle, bottom = borderStyle)
                 try:
                     if not cell.row % 2:
                         if '✆' in cell.value:
                             cell.style = ad_style
-                        elif iscolor :
+                        elif iscolor and cell.column != 1 :
                             cell.fill = openpyxl.styles.PatternFill(patternType = 'solid', fgColor = colorlight)
                 except: #if celle empty : none so no iterable
                     pass
-                if cell.column != 1:
+                if sheet.cell(cell.row, 1).value != None and sheet.cell(cell.row, 1).value != '':
+                    cell.border = openpyxl.styles.Border(left = borderStyle, right = borderStyle, top = borderCity)
+                else:
+                    cell.border = openpyxl.styles.Border(left = borderStyle, right = borderStyle, top = borderStyle)
+                if cell.column != 1 and cell.column != 2:
                     cell.alignment = openpyxl.styles.Alignment(horizontal = 'center')
 
         compteur +=1
@@ -284,9 +303,16 @@ try:
 
     print('Récupération des fichiers et créations des tables...')
     necessaryFiles = ['routes.txt', 'stop_times.txt', 'stops.txt','trips.txt', 'calendar.txt']
+    possibleFile = ['city.txt']
     for csvfile in necessaryFiles :
         createDataBaseTableFromCsv(csvfile)
-
+    isPossibleFile = []
+    for csvfile in possibleFile:
+        try:
+            createDataBaseTableFromCsv(csvfile)
+            isPossibleFile.append(csvfile)
+        except:
+            pass
     print('-'*50)   
 
     print('Récupération des routes...')
