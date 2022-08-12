@@ -1,0 +1,13 @@
+Prérequis (à vérifier à la première utilisation uniquement): 
+  L'ordinateur doit avoir python d'installer (cocher toute les options à l'instalation).
+  La bibliothèque Openpyxl non installée par défault doit y être présente. Pour ce faire : win + R > cmd > py > pip install openpyxl
+  
+Utilisation : 
+ Créer un nouveau dossier et y importer le GTFS.
+ Si les villes sont souhaité, ajouter le fichier city.txt à créer manuellement
+ Copier/coller le programme dans ce même dossier.
+ Exécuter le programme.
+ Une console apparait avec des informations ; un fichier .bd et un fichier .xls sont créer si le déroulement s'effectue corectement.
+ Le fichier .xls contient les informations du GTFS, elle doivent êtres retoucher celon les consigne du document "Mise en Page"
+ 
+ATTENTION : si le programme doit être relancer, effacer les fichier .db et .xls. En cas d'oublie, le programme ne s'executera pas correctement.
