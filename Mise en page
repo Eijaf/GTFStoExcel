@@ -1,0 +1,11 @@
+Pour chaque page du classeur, contenant une ligne aller-retour :
+
+ 1) Déplacer le nom de ligne sur le coté puis ajuster les colones à la bonne taille pour faciliter la lecture.
+ 2) Vérifier l'ordre des arrêts grace au horaires, les déplacer au bon endroit le cas échéant et si possible les regrouper par blocs (attention si les villes sont renseigner à ne pas les mélanger).
+ 3) Reproduire, le cas échéant, la mise en forme correct (alternace couleurs et pointillé de séparation de ville) grâce à l'outil de copie de mise en forme.
+ 4) Mettre en couleurs pleine les colonnes Me (Mercredi uniquement) et V (Vendredi uniquement).
+ 5) Mettre en gras les arrêts de début et fin de ligne.
+ 6) Supprimer les 3 premières lignes de chaque tableau (début de validité, fin de validité et le code de la ligne).
+ 8) Definir la largeur des colonnes contenant les horaires à 8 char.
+ 7) Ajouter les éventuelles légendes.
+ 8) Definir la zone d'impression et exporter sous PDF en ajustant à la page.

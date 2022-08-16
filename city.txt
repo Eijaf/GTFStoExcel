@@ -1,0 +1,27 @@
+city_id,city_name
+arz,ARZANO
+ban,BANNALEC
+bay,BAYE
+brn,BERNÉ
+clo,CLOHARS-CARNOËT
+fao,LE FAOUËT
+gdl,GUIDEL
+gff,GUISCRIFF
+ggo,GUILLIGOMARC'H
+gld,GUIDEL
+lcn,LOCUNOLÉ
+lvn,LANVÉNÉGEN
+mel,MELLAC
+mes,MESLAN
+moe,MOËLAN-SUR-MER
+msl,MESLAN
+plo,PLOUAY
+pta,PONT-AVEN
+qui,QUIMPERLÉ
+qur,QUERRIEN
+red,RÉDÉNÉ
+rie,RIEC-SUR-BÉLON
+ros,ROSPORDEN
+sca,SCAËR
+stt,SAINT-THURIEN
+tre,TRÉMÉVEN LE TRÉVOUX
