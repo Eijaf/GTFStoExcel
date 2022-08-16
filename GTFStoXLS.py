@@ -97,6 +97,8 @@ def rewriteStrDAys(dictDaysTrips):
             dictDaysTrips[trips] = 'LàV'
         elif strday == 'LMaMeJVS':
             dictDaysTrips[trips] = 'LàS'
+        elif strday == 'LMaJV':
+            dictDaysTrips[trips] = 'LMJV'    
         else:
             dictDaysTrips[trips] = strday
     return dictDaysTrips
