@@ -143,7 +143,7 @@ def extractCity(dictops):
         if id_city != previous :
             cursor.execute('''SELECT city_name
                                FROM city
-                               WHERE city_id="{}"'''.format(id_city))
+                               WHERE city_id="{}"'''.format(id_city))                 
             dictops[stop][0] = cursor.fetchone()[0]
             previous = id_city      
     return dictops
@@ -264,8 +264,8 @@ def createXLS(listRoutes, dictSens0, dictSens1,dicDays0, dicDays1, dicPeriodRout
         #page layout
         iscolor = 0
         color = getRouteColor(route)
-        colorlight = color50(color)
         try:
+            colorlight = color50(color)
             sheet.sheet_properties.tabColor = color
             iscolor = 1
         except:
