@@ -149,21 +149,60 @@ def extractCity(dictops):
     return dictops
 
 def extractStops(route, direction): #retrun the stops in the right order
-    cursor. execute('''SELECT stops.stop_id ,stops.stop_name
-                    FROM stops
-                    JOIN stop_times
-                    ON stop_times.stop_id = stops.stop_id
-                    JOIN trips
-                   ON trips.trip_id = stop_times.trip_id
-                    JOIN routes
-                    ON routes.route_id = trips.route_id
-                    WHERE routes.route_short_name = "{}" AND trips.direction_id = '{}' AND stop_times.drop_off_type !="1"
-                    GROUP BY stops.stop_id HAVING MIN(stop_times.departure_time)
-                    ORDER BY stop_times.departure_time ASC'''.format(route, direction))
-    dictops = {row[0] : ['',row[1]] for row in cursor}
-    if 'city.txt' in isPossibleFile :
-        dictops = extractCity(dictops)
-    return dictops
+    print(route)
+    cursor.execute('''SELECT stop_times.trip_id
+               FROM stop_times
+               JOIN trips
+               ON stop_times.trip_id = trips.trip_id
+               JOIN routes
+               ON routes.route_id = trips.route_id
+               WHERE routes.route_short_name = "{}" AND trips.direction_id = "{}"
+               GROUP BY stop_times.trip_id HAVING MIN(stop_times.departure_time)
+               ORDER BY stop_times.departure_time'''.format(route, direction))  
+                        
+    
+    tripList = cursor.fetchall() #Liste des voyages de la route dans un sens
+
+    try:
+        #On récupère la liste d'arrêts à partir du premier voyage
+        cursor.execute('''SELECT stops.stop_id ,stops.stop_name
+                           FROM stops
+                           JOIN stop_times
+                           ON stop_times.stop_id = stops.stop_id
+                           WHERE stop_times.trip_id = "{}" AND stop_times.drop_off_type !="1"
+                           ORDER BY stop_times.stop_sequence ASC'''.format(tripList[0][0]))
+        stopsList = cursor.fetchall()
+        
+        #on fait tourner tout les autres voyages pour voir si il ma,que des arrêts et on les insert
+
+        for trip in tripList[1:]:  #on passe l'elmt 0 car déjà récuperé
+            
+            c = 0
+            
+            cursor.execute('''SELECT stops.stop_id ,stops.stop_name
+                           FROM stops
+                           JOIN stop_times
+                           ON stop_times.stop_id = stops.stop_id
+                           WHERE stop_times.trip_id = "{}" AND stop_times.drop_off_type !="1"
+                           ORDER BY stop_times.stop_sequence ASC'''.format(trip[0]))
+            stoptripList = cursor.fetchall()
+        
+    
+            for stop in stoptripList :
+                if stop not in stopsList :
+                    stopsList.insert(c, stop)
+                    c +=1 #on incrémente car on a ajouter un élément et le suivant sera forcément après
+                else :
+                    c = stopsList.index(stop)+1 #on incrémente le compteur à la position de l'arret dans liste principale car forcément après
+        
+        dictops = {L[0] : ['',L[1]] for L in stopsList}
+            
+        if 'city.txt' in isPossibleFile :
+            dictops = extractCity(dictops)
+            
+        return dictops
+    except:
+        return {}
 
 def createTable(route, dictStops, dictSens, dicDayTrip, dicPeriodTrip) :
     table = [ ['','Début de validité'], ['','Fin de validité'],['',''], ['','']] + [ [stops] for stops in dictStops]
