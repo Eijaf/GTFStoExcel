@@ -51,8 +51,8 @@ def extractTrip(listRoutes, direction):
                        JOIN routes
                        ON routes.route_id = trips.route_id
                        WHERE routes.route_short_name = "{}" AND trips.direction_id = "{}"
-                       ORDER BY stop_times.departure_time
-                        '''.format(route, direction))
+                       GROUP BY trips.trip_id HAVING MAX(stop_times.departure_time)
+                       ORDER BY stop_times.departure_time'''.format(route, direction))
         dictTrip[route] = {key : {} for key in cursor}
     return dictTrip
 
@@ -149,7 +149,7 @@ def extractCity(dictops):
     return dictops
 
 def extractStops(route, direction): #retrun the stops in the right order
-    print(route)
+
     cursor.execute('''SELECT stop_times.trip_id
                FROM stop_times
                JOIN trips
