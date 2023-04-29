@@ -131,7 +131,7 @@ def suppdoubleAndExtractStops(dictTrip, listRoute):
                    #ajout de la partie heure d'arriver
                    if promptArrivalTimes =='y':
                        if stops[1][:5] != stops[3][:5]:
-                           dictTripStops[route_short][tripAndService_id][stops[0]] = stops[3][:5] + " / " + dictTripStops[route_short][tripAndService_id][stops[0]]
+                           dictTripStops[route_short][tripAndService_id][stops[0]] = stops[3][:5] + " // " + dictTripStops[route_short][tripAndService_id][stops[0]]
                    
                dictDaysTrips[tripNumber] = GetstrDays(service_id)
                dictPeriodeTrips[tripNumber] = GetstrPeriode(service_id)
@@ -284,6 +284,7 @@ def createXLS(listRoutes, dictSens0, dictSens1,dicDays0, dicDays1, dicPeriodRout
         dicPeriodTrip0, dicPeriodTrip1 = dicPeriodRoute0[route], dicPeriodRoute1[route]
         table0 = createTable(route, dictStops0, dictSens0, dicDayTrip0, dicPeriodTrip0) #grille sens 0
         table1 = createTable(route, dictStops1, dictSens1, dicDayTrip1, dicPeriodTrip1) #grille sens 1
+        haveArrivalTime = []
 
         wb.create_sheet(title=route)
         sheet = wb[route]
@@ -317,7 +318,35 @@ def createXLS(listRoutes, dictSens0, dictSens1,dicDays0, dicDays1, dicPeriodRout
             misscolor += route + ', '
             pass
 
-    
+        
+
+        if promptArrivalTimes == "y" :
+            for column in sheet.columns: 
+                for cell in column:
+                    try:
+                        if '//' in cell.value :
+                            if (sheet.cell(cell.row, 2).value, cell.row) not in haveArrivalTime :
+                                    haveArrivalTime.append((sheet.cell(cell.row, 2).value, cell.row))
+                    except: #if celle empty : none so no iterable
+                        pass
+            for elmt in reversed(haveArrivalTime) : #reversed car sinon un décalage se fait a chaque ligne insérée
+                sheet.insert_rows(elmt[1]) 
+                rowArrival = sheet[elmt[1]+1]  
+                for cellule in rowArrival:
+                    try :
+                        if '//' in cellule.value :
+                            sheet.cell(cellule.row -1, cellule.column).value = cellule.value[:5]
+                            cellule.value = cellule.value[9:]
+                        else :
+                            sheet.cell(cellule.row -1, cellule.column).value = cellule.value
+                    except: #if celle empty : none so no iterable
+                        pass        
+                sheet.cell(elmt[1], 2).value = elmt[0] + " (arrivée)" 
+                sheet.cell(elmt[1] +1, 2).value = elmt[0] + " (départ)"
+                
+                
+                
+                
         for column in sheet.columns: 
             for cell in column:
                 try:
