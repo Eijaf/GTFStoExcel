@@ -119,7 +119,7 @@ def suppdoubleAndExtractStops(dictTrip, listRoute):
                 dictDaysTrips[tripNumber] += GetstrDays(service_id) #+= cause already exist                
                 del dictTripStops[route_short][tripAndService_id] #delet the double
             else :
-               cursor.execute('''SELECT stops.stop_id, stop_times.departure_time, stop_times.pickup_type
+               cursor.execute('''SELECT stops.stop_id, stop_times.departure_time, stop_times.pickup_type, stop_times.arrival_time
                               FROM stops
                               JOIN stop_times
                               ON stop_times.stop_id = stops.stop_id 
@@ -127,11 +127,17 @@ def suppdoubleAndExtractStops(dictTrip, listRoute):
                               ORDER BY stop_times.stop_sequence'''.format(trip_id))
                for stops in cursor.fetchall():
                    dictTripStops[route_short][tripAndService_id][stops[0]] = stops[1][:5] + ' ✆' if stops[2]=='2' else stops[1][:5]
+                   
+                   #ajout de la partie heure d'arriver
+                   if promptArrivalTimes =='y':
+                       if stops[1][:5] != stops[3][:5]:
+                           dictTripStops[route_short][tripAndService_id][stops[0]] = stops[3][:5] + " / " + dictTripStops[route_short][tripAndService_id][stops[0]]
+                   
                dictDaysTrips[tripNumber] = GetstrDays(service_id)
                dictPeriodeTrips[tripNumber] = GetstrPeriode(service_id)
                compare.append(tripNumber)
 
-        dictDaysTrips = rewriteStrDAys(dictDaysTrips) #on réécrit le cat régulier des jours
+        dictDaysTrips = rewriteStrDAys(dictDaysTrips) #on réécrit le cas régulier des jours
         dicDays[route_short] = dictDaysTrips
         dicPeriode[route_short] = dictPeriodeTrips
     return dictTripStops, dicDays, dicPeriode
@@ -337,6 +343,11 @@ def createXLS(listRoutes, dictSens0, dictSens1,dicDays0, dicDays1, dicPeriodRout
     wb.save('Horaires_GTFS.xlsx')
 
 try:
+    
+    promptArrivalTimes = ""
+    while promptArrivalTimes != 'y' and promptArrivalTimes != 'n':
+        promptArrivalTimes = input("Voulez-vous afficher les horaires d'arrivés ? [y/n]")
+    
     print('Création de la base de données...')
     connection = sqlite3.connect('BD_GTFS.db')
     cursor = connection.cursor()
